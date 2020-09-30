@@ -1,0 +1,13 @@
+name: AthleticBuilder
+version: "0.0.1-SNAPSHOT"
+main: xyz.acrylicstyle.athleticBuilder.AthleticBuilderPlugin
+commands:
+  athletic:
+    aliases: ["ath"]
+    permission: athleticbuilder.athletic
+  spawn:
+    description: ""
+  reset:
+    description: ""
+  back:
+    description: ""
