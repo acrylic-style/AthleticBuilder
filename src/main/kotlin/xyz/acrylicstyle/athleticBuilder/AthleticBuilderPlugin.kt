@@ -55,7 +55,7 @@ class AthleticBuilderPlugin : JavaPlugin(), Listener {
         Bukkit.getScheduler().runTaskTimerAsynchronously(this, {
             Bukkit.getOnlinePlayers().forEach { player ->
                 val progress = playingAthletic[player.uniqueId] ?: return@forEach
-                sendActionBar(player, "${ChatColor.GREEN}${progress.getPath().name} ${ChatColor.LIGHT_PURPLE} | ${ChatColor.GREEN}時間: ${ChatColor.WHITE}${formatTime((System.currentTimeMillis() - progress.getPendingRecord().startTime).toInt())}")
+                sendActionBar(player, "${ChatColor.GREEN}${progress.getPath().name} ${ChatColor.LIGHT_PURPLE}| ${ChatColor.GREEN}時間: ${ChatColor.WHITE}${formatTime((System.currentTimeMillis() - progress.getPendingRecord().startTime).toInt())}")
             }
         }, 1L, 1L)
     }
