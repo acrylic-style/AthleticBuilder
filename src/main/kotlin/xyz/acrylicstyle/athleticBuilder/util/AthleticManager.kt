@@ -16,6 +16,8 @@ object AthleticManager {
         }
     }
 
+    fun getAthletics() = cache
+
     fun getAthletic(id: String): AthleticConfiguration? {
         if (cache.containsKey(id)) return cache[id]
         val file = File("./plugins/AthleticBuilder/athletics/$id.yml")

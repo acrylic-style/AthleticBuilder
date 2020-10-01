@@ -83,7 +83,7 @@ class AthleticBuilderPlugin : JavaPlugin(), Listener {
             val path = buildingAthletic[e.player.uniqueId]!!
             if (e.blockPlaced.type == Material.GOLD_PLATE) {
                 if (path.start == null) {
-                    path.initialLocation = e.player.location.clone()
+                    path.initialLocation = e.player.location.clone().apply { yaw = 0.0F }
                     path.start = e.blockPlaced.location
                     e.player.sendMessage("${ChatColor.GREEN}スタート地点を追加しました。(${e.blockPlaced.location.toReadableString()}${ChatColor.GREEN})")
                     return
