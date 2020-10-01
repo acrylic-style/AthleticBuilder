@@ -13,12 +13,13 @@ repositories {
     mavenCentral()
     maven { url = URI("https://hub.spigotmc.org/nexus/content/repositories/snapshots/") }
     maven { url = URI("https://repo.acrylicstyle.xyz/") }
+    maven { url = URI("https://repo2.acrylicstyle.xyz/") }
 }
 
 dependencies {
     implementation(kotlin("stdlib-jdk8"))
     compileOnly("org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT")
-    compileOnly("xyz.acrylicstyle:api:0.5.14a")
+    compileOnly("xyz.acrylicstyle:api:0.5.18")
     compileOnly(fileTree(mapOf("dir" to "libs", "include" to arrayOf("*.jar"))))
 }
 

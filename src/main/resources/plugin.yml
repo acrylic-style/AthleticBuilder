@@ -7,7 +7,3 @@ commands:
     permission: athleticbuilder.athletic
   spawn:
     description: ""
-  reset:
-    description: ""
-  back:
-    description: ""
