@@ -141,7 +141,7 @@ class AthleticBuilderPlugin : JavaPlugin(), Listener {
                 val progress = playingAthletic[e.player.uniqueId]!!
                 when (e.item) {
                     Items.BACK_TO_LAST_CHECKPOINT -> {
-                        e.player.teleport(progress.lastSection ?: progress.getPath().initialLocation)
+                        e.player.teleport(progress.lastSectionPlayer ?: progress.getPath().initialLocation)
                     }
                     Items.RESET -> {
                         e.player.teleport(progress.getPath().initialLocation)
@@ -164,6 +164,7 @@ class AthleticBuilderPlugin : JavaPlugin(), Listener {
                     e.player.playSound(e.player.location, Sound.BLOCK_NOTE_PLING, 100000F, 2F)
                     e.player.sendMessage("${ChatColor.GREEN}タイマーを00:00.000にリセットしました！")
                     progress.lastSection = null
+                    progress.lastSectionPlayer = null
                     progress.setPendingRecord(PendingPlayerAthleticRecord(progress.id, System.currentTimeMillis(), CollectionList(), 0))
                     giveAthleticItem(e.player)
                     return
@@ -234,6 +235,7 @@ class AthleticBuilderPlugin : JavaPlugin(), Listener {
                 previousRecord += ")"
                 e.player.sendMessage("${ChatColor.GREEN}中間地点を通過しました。 ${ChatColor.GRAY}(今回: ${color}${formatTime(currTime)}${ChatColor.GRAY}$previousRecord")
                 progress.lastSection = e.clickedBlock.location
+                progress.lastSectionPlayer = e.player.location.clone()
             }
         }
     }

@@ -6,6 +6,7 @@ import java.util.*
 class PlayerAthleticProgress(private val uuid: UUID, val id: String) {
     private var pendingRecord: PendingPlayerAthleticRecord? = null
     var lastSection: Location? = null
+    var lastSectionPlayer: Location? = null
 
     fun getPath(): AthleticPath = AthleticManager.getAthletic(id)!!.toAthleticPath()
 
