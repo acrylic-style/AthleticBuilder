@@ -127,7 +127,7 @@ class AthleticBuilderPlugin : JavaPlugin(), Listener {
 
     @EventHandler
     fun onPlayerInteract(e: PlayerInteractEvent) {
-        if (e.action == Action.RIGHT_CLICK_AIR || e.action == Action.RIGHT_CLICK_BLOCK) {
+        if (e.action == Action.RIGHT_CLICK_AIR || e.action == Action.RIGHT_CLICK_BLOCK || e.action == Action.LEFT_CLICK_AIR || e.action == Action.LEFT_CLICK_BLOCK) {
             if (e.item == null) return
             if (e.item == Items.BACK_TO_LAST_CHECKPOINT
                 || e.item == Items.RESET
@@ -141,12 +141,22 @@ class AthleticBuilderPlugin : JavaPlugin(), Listener {
                 val progress = playingAthletic[e.player.uniqueId]!!
                 when (e.item) {
                     Items.BACK_TO_LAST_CHECKPOINT -> {
+                        if (e.action == Action.LEFT_CLICK_AIR || e.action == Action.LEFT_CLICK_BLOCK) {
+                            e.player.teleport(progress.getPath().initialLocation)
+                            return
+                        }
                         e.player.teleport(progress.lastSectionPlayer ?: progress.getPath().initialLocation)
                     }
                     Items.RESET -> {
+                        if (e.action == Action.LEFT_CLICK_AIR || e.action == Action.LEFT_CLICK_BLOCK) {
+                            return
+                        }
                         e.player.teleport(progress.getPath().initialLocation)
                     }
                     Items.CANCEL -> {
+                        if (e.action == Action.LEFT_CLICK_AIR || e.action == Action.LEFT_CLICK_BLOCK) {
+                            return
+                        }
                         playingAthletic.remove(e.player.uniqueId)
                         removeAthleticItem(e.player)
                     }
