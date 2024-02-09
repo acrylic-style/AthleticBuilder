@@ -1,4 +1,4 @@
-package xyz.acrylicstyle.athleticBuilder.util
+package xyz.acrylicstyle.athleticbuilder.util
 
 import org.bukkit.Location
 

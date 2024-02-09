@@ -1,15 +1,10 @@
-package xyz.acrylicstyle.athleticBuilder.commands
+package xyz.acrylicstyle.athleticbuilder.commands
 
 import org.bukkit.ChatColor
 import org.bukkit.entity.Player
-import xyz.acrylicstyle.athleticBuilder.AthleticBuilderPlugin
-import xyz.acrylicstyle.athleticBuilder.util.AthleticManager
-import xyz.acrylicstyle.athleticBuilder.util.MutableAthleticPath
-import xyz.acrylicstyle.tomeito_api.subcommand.PlayerSubCommandExecutor
-import xyz.acrylicstyle.tomeito_api.subcommand.SubCommand
+import xyz.acrylicstyle.athleticbuilder.util.AthleticManager
 
-@SubCommand(name = "delete", usage = "/athletic delete <ID>", description = "アスレチックを削除します。")
-class DeleteCommand: PlayerSubCommandExecutor() {
+object DeleteCommand: SubCommand("delete", "/athletic delete <ID>", "アスレチックを削除します。") {
     override fun onCommand(player: Player, args: Array<String>) {
         if (args.isEmpty()) {
             player.sendMessage("${ChatColor.RED}IDを指定してください。")
@@ -26,5 +21,12 @@ class DeleteCommand: PlayerSubCommandExecutor() {
         }
         AthleticManager.deleteAthletic(id)
         player.sendMessage("${ChatColor.GREEN}アスレチック${ChatColor.YELLOW}$id${ChatColor.GREEN}を削除しました。")
+    }
+
+    override fun suggest(player: Player, args: Array<String>): List<String> {
+        if (args.size == 1) {
+            return AthleticManager.getAthletics().keys.filter { it.startsWith(args[0], ignoreCase = true) }
+        }
+        return emptyList()
     }
 }

@@ -1,9 +1,7 @@
-import java.net.URI
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     java
-    kotlin("jvm") version "1.3.72"
+    kotlin("jvm") version "1.9.22"
+    id("com.github.johnrengelman.shadow") version "8.1.1"
 }
 
 group = "xyz.acrylicstyle"
@@ -11,47 +9,24 @@ version = "1.0"
 
 repositories {
     mavenCentral()
-    maven { url = URI("https://hub.spigotmc.org/nexus/content/repositories/snapshots/") }
-    maven { url = URI("https://repo.acrylicstyle.xyz/") }
-    maven { url = URI("https://repo2.acrylicstyle.xyz/") }
+    maven { url = uri("https://hub.spigotmc.org/nexus/content/repositories/snapshots/") }
+    maven { url = uri("https://oss.sonatype.org/content/repositories/public/") }
+    maven { url = uri("https://repo.azisaba.net/repository/maven-public/") }
+    maven { url = uri("https://repo.acrylicstyle.xyz/repository/maven-public/") }
 }
 
 dependencies {
-    implementation(kotlin("stdlib-jdk8"))
-    compileOnly("org.spigotmc:spigot-api:1.8.8-R0.1-SNAPSHOT")
-    compileOnly("xyz.acrylicstyle:api:0.5.18")
-    compileOnly(fileTree(mapOf("dir" to "libs", "include" to arrayOf("*.jar"))))
+    compileOnly("org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT")
 }
 
-configure<JavaPluginConvention> {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-}
-tasks {
-    compileKotlin {
-        kotlinOptions.jvmTarget = "1.8"
-    }
-    compileTestKotlin {
-        kotlinOptions.jvmTarget = "1.8"
-    }
-}
-
-configure<JavaPluginConvention> {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-}
+java.toolchain.languageVersion.set(JavaLanguageVersion.of(8))
 
 tasks {
-    withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-        kotlinOptions.jvmTarget = "1.8"
-        kotlinOptions.freeCompilerArgs = listOf(
-            "-Xjsr305=strict"
-        )
-    }
-
-    withType<JavaCompile>().configureEach {
+    compileJava {
         options.encoding = "utf-8"
     }
 
-    withType<ProcessResources> {
+    processResources {
         filteringCharset = "UTF-8"
         from(sourceSets.main.get().resources.srcDirs) {
             include("**")
@@ -65,14 +40,11 @@ tasks {
         }
 
         from(projectDir) { include("LICENSE") }
+
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
 
-    withType<Jar> {
-        archiveFileName.set("AthleticBuilder.jar")
-        from(configurations.getByName("implementation").apply{ isCanBeResolved = true }.map { if (it.isDirectory) it else zipTree(it) })
+    shadowJar {
+        relocate("kotlin", "xyz.acrylicstyle.athleticbuilder.libs")
     }
-}
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-    languageVersion = "1.4"
 }

@@ -1,12 +1,12 @@
-package xyz.acrylicstyle.athleticBuilder
+package xyz.acrylicstyle.athleticbuilder
 
-import org.bukkit.Bukkit
-import org.bukkit.ChatColor
-import org.bukkit.Location
-import org.bukkit.Material
+import net.md_5.bungee.api.ChatMessageType
+import net.md_5.bungee.api.chat.TextComponent
+import org.bukkit.*
 import org.bukkit.entity.Player
 import org.bukkit.event.Event
 import org.bukkit.event.EventHandler
+import org.bukkit.event.EventPriority
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockPlaceEvent
@@ -18,41 +18,26 @@ import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.event.player.PlayerTeleportEvent
 import org.bukkit.event.player.PlayerToggleFlightEvent
 import org.bukkit.plugin.java.JavaPlugin
-import util.Collection
-import util.CollectionList
-import xyz.acrylicstyle.athleticBuilder.util.AthleticManager
-import xyz.acrylicstyle.athleticBuilder.util.Items
-import xyz.acrylicstyle.athleticBuilder.util.MutableAthleticPath
-import xyz.acrylicstyle.athleticBuilder.util.PendingPlayerAthleticRecord
-import xyz.acrylicstyle.athleticBuilder.util.PlayerAthleticProgress
-import xyz.acrylicstyle.minecraft.v1_8_R1.Packet
-import xyz.acrylicstyle.minecraft.v1_8_R1.PacketPlayOutChat
-import xyz.acrylicstyle.minecraft.v1_8_R1.PlayerConnection
-import xyz.acrylicstyle.nmsapi.abstracts.minecraft.EntityPlayer
-import xyz.acrylicstyle.shared.NMSAPI
-import xyz.acrylicstyle.tomeito_api.TomeitoAPI
-import xyz.acrylicstyle.tomeito_api.command.PlayerCommandExecutor
-import xyz.acrylicstyle.tomeito_api.sounds.Sound
+import xyz.acrylicstyle.athleticbuilder.commands.RootCommand
+import xyz.acrylicstyle.athleticbuilder.util.AthleticManager
+import xyz.acrylicstyle.athleticbuilder.util.Items
+import xyz.acrylicstyle.athleticbuilder.util.MutableAthleticPath
+import xyz.acrylicstyle.athleticbuilder.util.PendingPlayerAthleticRecord
+import xyz.acrylicstyle.athleticbuilder.util.PlayerAthleticProgress
 import java.util.*
 import kotlin.math.floor
 
 class AthleticBuilderPlugin : JavaPlugin(), Listener {
     companion object {
-        val buildingAthletic = Collection<UUID, MutableAthleticPath>()
-        val playingAthletic = Collection<UUID, PlayerAthleticProgress>()
+        val buildingAthletic = mutableMapOf<UUID, MutableAthleticPath>()
+        val playingAthletic = mutableMapOf<UUID, PlayerAthleticProgress>()
     }
 
     override fun onEnable() {
         Bukkit.getPluginManager().registerEvents(this, this)
-        TomeitoAPI.registerCommand("spawn", object: PlayerCommandExecutor() {
-            override fun onCommand(player: Player, args: Array<String>) {
-                playingAthletic.remove(player.uniqueId)
-                player.teleport(player.world.spawnLocation)
-            }
-        })
         AthleticManager.loadAthletics()
-        TomeitoAPI.getInstance().registerCommands(this.classLoader, "athletic", "xyz.acrylicstyle.athleticBuilder")
-        Bukkit.getScheduler().runTaskTimerAsynchronously(this, {
+        server.getPluginCommand("athletic")?.setExecutor(RootCommand)
+        Bukkit.getScheduler().runTaskTimerAsynchronously(this, Runnable {
             Bukkit.getOnlinePlayers().forEach { player ->
                 val progress = playingAthletic[player.uniqueId] ?: return@forEach
                 sendActionBar(player, "${ChatColor.GREEN}${progress.getPath().name} ${ChatColor.LIGHT_PURPLE}| ${ChatColor.GREEN}時間: ${ChatColor.WHITE}${formatTime((System.currentTimeMillis() - progress.getPendingRecord().startTime).toInt())}")
@@ -60,28 +45,26 @@ class AthleticBuilderPlugin : JavaPlugin(), Listener {
         }, 1L, 1L)
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOWEST)
     fun onPlayerQuit(e: PlayerQuitEvent) {
         buildingAthletic.remove(e.player.uniqueId)
-        playingAthletic.remove(e.player.uniqueId)
+        playingAthletic.remove(e.player.uniqueId)?.restoreHotBar(e.player)
     }
 
     @EventHandler
     fun onPlayerJoin(e: PlayerJoinEvent) {
         buildingAthletic.remove(e.player.uniqueId)
-        playingAthletic.remove(e.player.uniqueId)
+        playingAthletic.remove(e.player.uniqueId)?.restoreHotBar(e.player)
     }
 
     @EventHandler
     fun onBlockPlace(e: BlockPlaceEvent) {
-        if (e.itemInHand != null) {
-            if (e.itemInHand == Items.BACK_TO_LAST_CHECKPOINT
-                || e.itemInHand == Items.RESET
-                || e.itemInHand == Items.CANCEL) e.isCancelled = true
-        }
+        if (e.itemInHand == Items.BACK_TO_LAST_CHECKPOINT
+            || e.itemInHand == Items.RESET
+            || e.itemInHand == Items.CANCEL) e.isCancelled = true
         if (buildingAthletic.containsKey(e.player.uniqueId)) {
             val path = buildingAthletic[e.player.uniqueId]!!
-            if (e.blockPlaced.type == Material.GOLD_PLATE) {
+            if (e.blockPlaced.type == Material.LIGHT_WEIGHTED_PRESSURE_PLATE) {
                 if (path.start == null) {
                     path.initialLocation = e.player.location.clone().apply { yaw = 0.0F }
                     path.start = e.blockPlaced.location
@@ -98,7 +81,7 @@ class AthleticBuilderPlugin : JavaPlugin(), Listener {
                     }.start()
                     return
                 }
-            } else if (e.blockPlaced.type == Material.IRON_PLATE) {
+            } else if (e.blockPlaced.type == Material.HEAVY_WEIGHTED_PRESSURE_PLATE) {
                 val size = path.paths.size + 1
                 path.paths.add(e.blockPlaced.location)
                 e.player.sendMessage("${ChatColor.YELLOW}${size}${ChatColor.GREEN}個目の中間地点を追加しました。(${e.blockPlaced.location.toReadableString()}${ChatColor.GREEN})")
@@ -111,8 +94,9 @@ class AthleticBuilderPlugin : JavaPlugin(), Listener {
         if (e.cause == PlayerTeleportEvent.TeleportCause.PLUGIN) return
         playingAthletic.remove(e.player.uniqueId)?.let {
             e.player.sendMessage("${ChatColor.RED}アスレチック失敗: テレポートされました。")
-            e.player.teleport(it.getPath().initialLocation)
+            it.getPath().initialLocation?.let { it1 -> e.player.teleport(it1) }
             removeAthleticItem(e.player)
+            it.restoreHotBar(e.player)
         }
     }
 
@@ -120,8 +104,9 @@ class AthleticBuilderPlugin : JavaPlugin(), Listener {
     fun onPlayerToggleFlight(e: PlayerToggleFlightEvent) {
         playingAthletic.remove(e.player.uniqueId)?.let {
             e.player.sendMessage("${ChatColor.RED}アスレチック失敗: 浮遊状態を切り替えました。")
-            e.player.teleport(it.getPath().initialLocation)
+            it.getPath().initialLocation?.let { it1 -> e.player.teleport(it1) }
             removeAthleticItem(e.player)
+            it.restoreHotBar(e.player)
         }
     }
 
@@ -142,23 +127,25 @@ class AthleticBuilderPlugin : JavaPlugin(), Listener {
                 when (e.item) {
                     Items.BACK_TO_LAST_CHECKPOINT -> {
                         if (e.action == Action.LEFT_CLICK_AIR || e.action == Action.LEFT_CLICK_BLOCK) {
-                            e.player.teleport(progress.getPath().initialLocation)
+                            progress.getPath().initialLocation?.let { e.player.teleport(it) }
                             return
                         }
-                        e.player.teleport(progress.lastSectionPlayer ?: progress.getPath().initialLocation)
+                        (progress.lastSectionPlayer ?: progress.getPath().initialLocation)?.let { e.player.teleport(it) }
                     }
                     Items.RESET -> {
                         if (e.action == Action.LEFT_CLICK_AIR || e.action == Action.LEFT_CLICK_BLOCK) {
                             return
                         }
-                        e.player.teleport(progress.getPath().initialLocation)
+                        progress.getPath().initialLocation?.let { e.player.teleport(it) }
                     }
                     Items.CANCEL -> {
                         if (e.action == Action.LEFT_CLICK_AIR || e.action == Action.LEFT_CLICK_BLOCK) {
                             return
                         }
-                        playingAthletic.remove(e.player.uniqueId)
-                        removeAthleticItem(e.player)
+                        playingAthletic.remove(e.player.uniqueId)?.let {
+                            removeAthleticItem(e.player)
+                            it.restoreHotBar(e.player)
+                        }
                     }
                 }
             }
@@ -166,32 +153,33 @@ class AthleticBuilderPlugin : JavaPlugin(), Listener {
         }
         if (e.action != Action.PHYSICAL) return
         if (e.clickedBlock == null) return
-        if (e.clickedBlock.type == Material.GOLD_PLATE) {
+        if (e.clickedBlock!!.type == Material.LIGHT_WEIGHTED_PRESSURE_PLATE) {
             e.setUseInteractedBlock(Event.Result.DENY)
             if (playingAthletic.containsKey(e.player.uniqueId)) { // goal
                 val progress = playingAthletic[e.player.uniqueId]!!
-                if (e.clickedBlock.location == progress.getPath().start && (System.currentTimeMillis() - progress.getPendingRecord().startTime) > 1000) {
-                    e.player.playSound(e.player.location, Sound.BLOCK_NOTE_PLING, 100000F, 2F)
+                if (e.clickedBlock!!.location == progress.getPath().start && (System.currentTimeMillis() - progress.getPendingRecord().startTime) > 1000) {
+                    e.player.playSound(e.player.location, Sound.BLOCK_NOTE_BLOCK_PLING, 100000F, 2F)
                     e.player.sendMessage("${ChatColor.GREEN}タイマーを00:00.000にリセットしました！")
                     progress.lastSection = null
                     progress.lastSectionPlayer = null
-                    progress.setPendingRecord(PendingPlayerAthleticRecord(progress.id, System.currentTimeMillis(), CollectionList(), 0))
+                    progress.setPendingRecord(PendingPlayerAthleticRecord(progress.id, System.currentTimeMillis(), mutableListOf(), 0))
                     giveAthleticItem(e.player)
                     return
                 }
-                if (e.clickedBlock.location != progress.getPath().goal) return
+                if (e.clickedBlock!!.location != progress.getPath().goal) return
                 playingAthletic.remove(e.player.uniqueId)
                 val record = progress.getRecord()
                 if (progress.getPath().paths.size != progress.getPendingRecord().sectionTime.size) {
                     e.player.sendMessage("${ChatColor.RED}アスレチック失敗: どこかの中間地点をスキップしました。")
-                    playingAthletic.remove(e.player.uniqueId)
                     removeAthleticItem(e.player)
+                    progress.restoreHotBar(e.player)
                     return
                 }
                 progress.getPendingRecord().goalTime = (System.currentTimeMillis() - progress.getPendingRecord().startTime).toInt()
-                e.player.playSound(e.player.location, org.bukkit.Sound.LEVEL_UP, 100000F, 1F)
+                e.player.playSound(e.player.location, Sound.ENTITY_PLAYER_LEVELUP, 100000F, 1F)
                 e.player.sendMessage("${ChatColor.GREEN}アスレチック「${progress.getPath().name}」をゴールしました。")
                 removeAthleticItem(e.player)
+                progress.restoreHotBar(e.player)
                 var newRecord = false
                 if (record != null) {
                     e.player.sendMessage("${ChatColor.YELLOW}前回の記録: ${ChatColor.WHITE}${formatTime(record.goalTime)}${ChatColor.GREEN}秒")
@@ -204,35 +192,37 @@ class AthleticBuilderPlugin : JavaPlugin(), Listener {
                 if (newRecord) progress.getPendingRecord().toPlayerAthleticRecord().save(e.player.uniqueId)
                 e.player.sendMessage("${ChatColor.YELLOW}今回の記録: ${ChatColor.WHITE}${formatTime(progress.getPendingRecord().goalTime)}${ChatColor.GREEN}秒" + if (newRecord) "${ChatColor.GOLD} (新記録)" else "")
             } else { // start, or invalid location
-                val config = AthleticManager.findAthletic(e.clickedBlock.location) ?: return
+                val config = AthleticManager.findAthletic(e.clickedBlock!!.location) ?: return
                 if (e.player.isFlying) {
                     e.player.sendMessage("${ChatColor.RED}浮遊している状態ではアスレチックを開始できません。")
                     return
                 }
                 val progress = PlayerAthleticProgress(e.player.uniqueId, config.id)
-                progress.setPendingRecord(PendingPlayerAthleticRecord(config.id, System.currentTimeMillis(), CollectionList(), 0))
+                progress.storeAndClearHotBar(e.player)
+                progress.setPendingRecord(PendingPlayerAthleticRecord(config.id, System.currentTimeMillis(), mutableListOf(), 0))
                 playingAthletic[e.player.uniqueId] = progress
-                e.player.playSound(e.player.location, Sound.BLOCK_NOTE_PLING, 100000F, 2F)
+                e.player.playSound(e.player.location, Sound.BLOCK_NOTE_BLOCK_PLING, 100000F, 2F)
                 e.player.sendMessage("${ChatColor.GREEN}アスレチック「${config.getAthleticName()}」を開始しました。")
                 giveAthleticItem(e.player)
             }
-        } else if (e.clickedBlock.type == Material.IRON_PLATE) {
+        } else if (e.clickedBlock!!.type == Material.HEAVY_WEIGHTED_PRESSURE_PLATE) {
             e.setUseInteractedBlock(Event.Result.DENY)
             if (playingAthletic.containsKey(e.player.uniqueId)) {
                 val progress = playingAthletic[e.player.uniqueId]!!
-                if (!progress.getPath().paths.contains(e.clickedBlock.location)) return
-                if (progress.lastSection == e.clickedBlock.location) return
-                if (progress.getPath().paths.indexOf(e.clickedBlock.location) != progress.getPendingRecord().sectionTime.size) {
+                if (!progress.getPath().paths.contains(e.clickedBlock!!.location)) return
+                if (progress.lastSection == e.clickedBlock!!.location) return
+                if (progress.getPath().paths.indexOf(e.clickedBlock!!.location) != progress.getPendingRecord().sectionTime.size) {
                     e.player.sendMessage("${ChatColor.RED}アスレチック失敗: どこかの中間地点をスキップしました。")
                     playingAthletic.remove(e.player.uniqueId)
-                    e.player.teleport(progress.getPath().initialLocation)
+                    progress.getPath().initialLocation?.let { e.player.teleport(it) }
                     removeAthleticItem(e.player)
+                    progress.restoreHotBar(e.player)
                     return
                 }
                 val record = progress.getRecord()
                 val currTime = (System.currentTimeMillis() - progress.getPendingRecord().startTime).toInt()
                 progress.getPendingRecord().sectionTime.add(currTime)
-                e.player.playSound(e.player.location, Sound.BLOCK_NOTE_PLING, 100000F, 2F)
+                e.player.playSound(e.player.location, Sound.BLOCK_NOTE_BLOCK_PLING, 100000F, 2F)
                 var color = ChatColor.WHITE
                 var previousRecord = ""
                 if (record != null) {
@@ -244,16 +234,14 @@ class AthleticBuilderPlugin : JavaPlugin(), Listener {
                 }
                 previousRecord += ")"
                 e.player.sendMessage("${ChatColor.GREEN}中間地点を通過しました。 ${ChatColor.GRAY}(今回: ${color}${formatTime(currTime)}${ChatColor.GRAY}$previousRecord")
-                progress.lastSection = e.clickedBlock.location
+                progress.lastSection = e.clickedBlock!!.location
                 progress.lastSectionPlayer = e.player.location.clone()
             }
         }
     }
 
     private fun sendActionBar(player: Player, text: String) {
-        val title = NMSAPI.getClassWithoutException("IChatBaseComponent\$ChatSerializer").getMethod("a", String::class.java).invoke(null, "{\"text\":\"${text.replace("\"".toRegex(), "\\\"")}\"}")
-        val packet = PacketPlayOutChat.CLASS.getConstructor(NMSAPI.getClassWithoutException("IChatBaseComponent"), Byte::class.javaPrimitiveType).newInstance(title, (2).toByte())
-        PlayerConnection.CLASS.getMethod("sendPacket", Packet.CLASS).invoke(EntityPlayer.CLASS.getField("playerConnection")[EntityPlayer.getInstance(player).handle], packet)
+        player.spigot().sendMessage(ChatMessageType.ACTION_BAR, *TextComponent.fromLegacyText(text))
     }
 
     private fun giveAthleticItem(player: Player) {

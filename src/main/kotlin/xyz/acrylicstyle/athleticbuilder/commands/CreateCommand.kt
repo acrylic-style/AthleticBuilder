@@ -1,19 +1,13 @@
-package xyz.acrylicstyle.athleticBuilder.commands
+package xyz.acrylicstyle.athleticbuilder.commands
 
 import org.bukkit.ChatColor
 import org.bukkit.entity.Player
-import util.CollectionList
-import xyz.acrylicstyle.athleticBuilder.AthleticBuilderPlugin
-import xyz.acrylicstyle.athleticBuilder.util.AthleticManager
-import xyz.acrylicstyle.athleticBuilder.util.MutableAthleticPath
-import xyz.acrylicstyle.tomeito_api.subcommand.PlayerSubCommandExecutor
-import xyz.acrylicstyle.tomeito_api.subcommand.SubCommand
+import xyz.acrylicstyle.athleticbuilder.AthleticBuilderPlugin
+import xyz.acrylicstyle.athleticbuilder.util.AthleticManager
+import xyz.acrylicstyle.athleticbuilder.util.MutableAthleticPath
 
-@SubCommand(name = "create", usage = "/athletic create <ID>", description = "新しいアスレチックを作成します。")
-class CreateCommand: PlayerSubCommandExecutor() {
-    companion object {
-        val ID_REGEX = "^[a-zA-Z0-9][a-zA-Z0-9_]*[a-zA-Z0-9]$".toRegex()
-    }
+object CreateCommand: SubCommand("create", "/athletic create <ID> <名前>", "新しいアスレチックを作成します。") {
+    val ID_REGEX = "^[a-zA-Z0-9][a-zA-Z0-9_]*[a-zA-Z0-9]$".toRegex()
 
     override fun onCommand(player: Player, args: Array<String>) {
         if (args.size < 2) {
@@ -30,7 +24,7 @@ class CreateCommand: PlayerSubCommandExecutor() {
             player.sendMessage("${ChatColor.RED}指定したアスレチックはすでに存在します。")
             return
         }
-        AthleticBuilderPlugin.buildingAthletic[player.uniqueId] = MutableAthleticPath(id, name, null, null, CollectionList(), null)
+        AthleticBuilderPlugin.buildingAthletic[player.uniqueId] = MutableAthleticPath(id, name, null, null, mutableListOf(), null)
         player.sendMessage("${ChatColor.GREEN}アスレチックの作成を開始しました。${ChatColor.GRAY}(ID: ${id})")
         player.sendMessage("${ChatColor.LIGHT_PURPLE}金の感圧版${ChatColor.YELLOW}: ${ChatColor.GREEN}スタート・ゴール地点")
         player.sendMessage("${ChatColor.LIGHT_PURPLE}鉄の感圧版${ChatColor.YELLOW}: ${ChatColor.GREEN}中間地点")

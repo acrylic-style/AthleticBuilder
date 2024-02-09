@@ -1,6 +1,7 @@
 name: AthleticBuilder
-version: "0.0.1-SNAPSHOT"
-main: xyz.acrylicstyle.athleticBuilder.AthleticBuilderPlugin
+version: @version@
+main: xyz.acrylicstyle.athleticbuilder.AthleticBuilderPlugin
+api-version: 1.13
 commands:
   athletic:
     aliases: ["ath"]

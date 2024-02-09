@@ -1,12 +1,11 @@
-package xyz.acrylicstyle.athleticBuilder.util
+package xyz.acrylicstyle.athleticbuilder.util
 
 import org.bukkit.Location
-import util.StringCollection
 import java.io.File
 import java.lang.RuntimeException
 
 object AthleticManager {
-    private val cache = StringCollection<AthleticConfiguration>()
+    private val cache = mutableMapOf<String, AthleticConfiguration>()
 
     fun loadAthletics() {
         if (!File("./plugins/AthleticBuilder/athletics/").exists()) return
@@ -43,7 +42,7 @@ object AthleticManager {
 
     fun findAthletic(start: Location): AthleticConfiguration? {
         return try {
-            cache.valuesList().last { config ->
+            cache.values.last { config ->
                 try {
                     config.getStartLocation() == start
                 } catch (e: RuntimeException) {
