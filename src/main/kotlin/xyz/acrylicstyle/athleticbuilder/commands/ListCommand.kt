@@ -12,7 +12,7 @@ object ListCommand : SubCommand("list", "/athletic list", "アスレチック一
         AthleticManager.getAthletics().values.forEach { config ->
             val text = TextComponent("${ChatColor.YELLOW} - ${ChatColor.GREEN}アスレチック「${config.getAthleticName()}」${ChatColor.GRAY}(ID: ${config.id})")
             val initialLocation = config.getInitialLocation()!!
-            text.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/tp ${initialLocation.x} ${initialLocation.y} ${initialLocation.z} ${initialLocation.yaw} ${initialLocation.pitch}")
+            text.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/minecraft:tp ${initialLocation.x} ${initialLocation.y} ${initialLocation.z} ${initialLocation.yaw} ${initialLocation.pitch}")
             player.spigot().sendMessage(text)
         }
     }
