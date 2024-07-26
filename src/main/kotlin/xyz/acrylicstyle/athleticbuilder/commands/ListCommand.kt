@@ -10,10 +10,16 @@ object ListCommand : SubCommand("list", "/athletic list", "アスレチック一
     override fun onCommand(player: Player, args: Array<String>) {
         player.sendMessage("${ChatColor.GREEN}アスレチック一覧${ChatColor.YELLOW}(クリックでテレポート)")
         AthleticManager.getAthletics().values.forEach { config ->
-            val text = TextComponent("${ChatColor.YELLOW} - ${ChatColor.GREEN}アスレチック「${config.getAthleticName()}」${ChatColor.GRAY}(ID: ${config.id})")
-            val initialLocation = config.getInitialLocation()!!
-            text.clickEvent = ClickEvent(ClickEvent.Action.RUN_COMMAND, "/minecraft:tp @s ${initialLocation.x} ${initialLocation.y} ${initialLocation.z} ${initialLocation.yaw} ${initialLocation.pitch}")
-            player.spigot().sendMessage(text)
+            if (player.hasPermission("athleticbuilder.see-all") || config.getOwner() == player.uniqueId) {
+                val text =
+                    TextComponent("${ChatColor.YELLOW} - ${ChatColor.GREEN}アスレチック「${config.getAthleticName()}」${ChatColor.GRAY}(ID: ${config.id})")
+                val initialLocation = config.getInitialLocation()!!
+                text.clickEvent = ClickEvent(
+                    ClickEvent.Action.RUN_COMMAND,
+                    "/minecraft:tp @s ${initialLocation.x} ${initialLocation.y} ${initialLocation.z} ${initialLocation.yaw} ${initialLocation.pitch}"
+                )
+                player.spigot().sendMessage(text)
+            }
         }
     }
 }

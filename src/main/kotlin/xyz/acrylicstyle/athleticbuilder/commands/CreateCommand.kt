@@ -7,7 +7,7 @@ import xyz.acrylicstyle.athleticbuilder.util.AthleticManager
 import xyz.acrylicstyle.athleticbuilder.util.MutableAthleticPath
 
 object CreateCommand: SubCommand("create", "/athletic create <ID> <名前>", "新しいアスレチックを作成します。") {
-    val ID_REGEX = "^[a-zA-Z0-9][a-zA-Z0-9_]*[a-zA-Z0-9]$".toRegex()
+    val ID_REGEX = "^[a-zA-Z0-9_]+$".toRegex()
 
     override fun onCommand(player: Player, args: Array<String>) {
         if (args.size < 2) {
@@ -17,14 +17,14 @@ object CreateCommand: SubCommand("create", "/athletic create <ID> <名前>", "�
         val id = args[0]
         val name = args[1]
         if (!ID_REGEX.matches(id)) {
-            player.sendMessage("${ChatColor.RED}IDは英数字アンダーバーのみで英数字で始まり、英数字で終わる必要があります。")
+            player.sendMessage("${ChatColor.RED}IDは英数字アンダーバーのみ使用可能です。")
             return
         }
         if (AthleticManager.getAthletic(id) != null) {
             player.sendMessage("${ChatColor.RED}指定したアスレチックはすでに存在します。")
             return
         }
-        AthleticBuilderPlugin.buildingAthletic[player.uniqueId] = MutableAthleticPath(id, name, null, null, mutableListOf(), null)
+        AthleticBuilderPlugin.buildingAthletic[player.uniqueId] = MutableAthleticPath(id, name, player.uniqueId, null, null, mutableListOf(), null)
         player.sendMessage("${ChatColor.GREEN}アスレチックの作成を開始しました。${ChatColor.GRAY}(ID: ${id})")
         player.sendMessage("${ChatColor.LIGHT_PURPLE}金の感圧版${ChatColor.YELLOW}: ${ChatColor.GREEN}スタート・ゴール地点")
         player.sendMessage("${ChatColor.LIGHT_PURPLE}鉄の感圧版${ChatColor.YELLOW}: ${ChatColor.GREEN}中間地点")

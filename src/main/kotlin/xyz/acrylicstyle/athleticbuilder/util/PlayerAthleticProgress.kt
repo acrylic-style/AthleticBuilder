@@ -5,7 +5,7 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import java.util.*
 
-class PlayerAthleticProgress(private val uuid: UUID, val id: String) {
+class PlayerAthleticProgress(private val uuid: UUID, val id: String, val useItem: Boolean) {
     private var pendingRecord: PendingPlayerAthleticRecord? = null
     var lastSection: Location? = null
     var lastSectionPlayer: Location? = null
@@ -22,12 +22,16 @@ class PlayerAthleticProgress(private val uuid: UUID, val id: String) {
     fun setPendingRecord(record: PendingPlayerAthleticRecord) { pendingRecord = record }
 
     fun storeAndClearHotBar(player: Player) {
-        hotBar.clear()
-        (0..8).forEach { slot -> hotBar[slot] = player.inventory.getItem(slot) }
-        (0..8).forEach { player.inventory.setItem(it, null) }
+        if (useItem) {
+            hotBar.clear()
+            (0..8).forEach { slot -> hotBar[slot] = player.inventory.getItem(slot) }
+            (0..8).forEach { player.inventory.setItem(it, null) }
+        }
     }
 
     fun restoreHotBar(player: Player) {
-        hotBar.forEach { (slot, item) -> player.inventory.setItem(slot, item) }
+        if (useItem) {
+            hotBar.forEach { (slot, item) -> player.inventory.setItem(slot, item) }
+        }
     }
 }

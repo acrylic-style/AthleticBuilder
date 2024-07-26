@@ -3,12 +3,18 @@ package xyz.acrylicstyle.athleticbuilder.util
 import org.bukkit.Location
 import org.bukkit.configuration.file.YamlConfiguration
 import java.io.File
+import java.util.UUID
 
 class AthleticConfiguration(val id: String, private val path: File): YamlConfiguration() {
     init {
         path.parentFile.mkdirs()
         if (path.exists()) load(path)
     }
+
+    fun getOwner(): UUID =
+        this.getString("owner")?.let { if (it.isEmpty()) null else UUID.fromString(it) } ?: UUID(0, 0)
+
+    fun setOwner(owner: UUID?) = this.set("owner", owner?.toString())
 
     fun getAthleticName(): String? = this.getString("name")
 
@@ -43,6 +49,7 @@ class AthleticConfiguration(val id: String, private val path: File): YamlConfigu
     fun getGoalLocation(): Location? = this.getLocation("goal")
 
     fun fromAthleticPath(path: AthleticPath) {
+        this.setOwner(path.owner)
         this.setAthleticName(path.name)
         this.setInitialLocation(path.initialLocation)
         this.setStartLocation(path.start)
@@ -51,5 +58,5 @@ class AthleticConfiguration(val id: String, private val path: File): YamlConfigu
         this.save(this.path)
     }
 
-    fun toAthleticPath() = AthleticPath(id, getAthleticName() ?: id, getInitialLocation(), getStartLocation(), getPaths() ?: ArrayList(), getGoalLocation())
+    fun toAthleticPath() = AthleticPath(id, getAthleticName() ?: id, getOwner(), getInitialLocation(), getStartLocation(), getPaths() ?: ArrayList(), getGoalLocation())
 }

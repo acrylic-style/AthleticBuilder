@@ -1,0 +1,2 @@
+# whether to enable control item (back to checkpoint, reset, cancel items)
+use-item: false

@@ -11,16 +11,18 @@ object DeleteCommand: SubCommand("delete", "/athletic delete <ID>", "アスレ�
             return
         }
         val id = args[0]
-        if (!CreateCommand.ID_REGEX.matches(id)) {
-            player.sendMessage("${ChatColor.RED}IDは英数字アンダーバーのみで英数字で始まり、英数字で終わる必要があります。")
-            return
+        AthleticManager.getAthletic(id).let { athletic ->
+            if (athletic == null) {
+                player.sendMessage("${ChatColor.RED}指定したアスレチックは存在しません。")
+                return
+            }
+            if (!player.hasPermission("athleticbuilder.delete-others") && athletic.getOwner() != player.uniqueId) {
+                player.sendMessage("${ChatColor.RED}指定したアスレチックはあなたが作成したものではありません。")
+                return
+            }
+            AthleticManager.deleteAthletic(id)
+            player.sendMessage("${ChatColor.GREEN}アスレチック${ChatColor.YELLOW}$id${ChatColor.GREEN}を削除しました。")
         }
-        if (AthleticManager.getAthletic(id) == null) {
-            player.sendMessage("${ChatColor.RED}指定したアスレチックは存在しません。")
-            return
-        }
-        AthleticManager.deleteAthletic(id)
-        player.sendMessage("${ChatColor.GREEN}アスレチック${ChatColor.YELLOW}$id${ChatColor.GREEN}を削除しました。")
     }
 
     override fun suggest(player: Player, args: Array<String>): List<String> {

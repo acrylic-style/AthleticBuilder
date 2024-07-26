@@ -34,6 +34,7 @@ class AthleticBuilderPlugin : JavaPlugin(), Listener {
     }
 
     override fun onEnable() {
+        saveDefaultConfig()
         Bukkit.getPluginManager().registerEvents(this, this)
         AthleticManager.loadAthletics()
         server.getPluginCommand("athletic")?.setExecutor(RootCommand)
@@ -197,13 +198,15 @@ class AthleticBuilderPlugin : JavaPlugin(), Listener {
                     e.player.sendMessage("${ChatColor.RED}浮遊している状態ではアスレチックを開始できません。")
                     return
                 }
-                val progress = PlayerAthleticProgress(e.player.uniqueId, config.id)
+                val progress = PlayerAthleticProgress(e.player.uniqueId, config.id, config.getBoolean("use-item", false))
                 progress.storeAndClearHotBar(e.player)
                 progress.setPendingRecord(PendingPlayerAthleticRecord(config.id, System.currentTimeMillis(), mutableListOf(), 0))
                 playingAthletic[e.player.uniqueId] = progress
                 e.player.playSound(e.player.location, Sound.BLOCK_NOTE_BLOCK_PLING, 100000F, 2F)
                 e.player.sendMessage("${ChatColor.GREEN}アスレチック「${config.getAthleticName()}」を開始しました。")
-                giveAthleticItem(e.player)
+                if (progress.useItem) {
+                    giveAthleticItem(e.player)
+                }
             }
         } else if (e.clickedBlock!!.type == Material.HEAVY_WEIGHTED_PRESSURE_PLATE) {
             e.setUseInteractedBlock(Event.Result.DENY)
@@ -245,6 +248,7 @@ class AthleticBuilderPlugin : JavaPlugin(), Listener {
     }
 
     private fun giveAthleticItem(player: Player) {
+        if (!config.getBoolean("use-item", false)) return
         player.inventory.setItem(2, null)
         player.inventory.setItem(3, Items.BACK_TO_LAST_CHECKPOINT)
         player.inventory.setItem(4, Items.RESET)
